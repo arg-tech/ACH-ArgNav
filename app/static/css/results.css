@@ -1,0 +1,24 @@
+html,
+body {
+    /* height: 100% */
+    margin: 0;
+    padding: 0;
+}
+
+svg {
+	height: 100%;
+	width: 100%;
+}
+
+.context-menu{
+    position: absolute;
+    display: none;
+}
+
+.dropdown_menu {
+  position: absolute;
+  display: inline-block;
+}
+/*tr td:hover { background-color: darkgray };*/
+
+/*tr th:hover { background-color: darkgray };*/

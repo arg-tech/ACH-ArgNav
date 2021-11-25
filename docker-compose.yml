@@ -1,0 +1,8 @@
+version: '2'
+
+services:
+ achargnav:
+  container_name: achargnav
+  build: .
+  ports:
+  - "8181:5000"
