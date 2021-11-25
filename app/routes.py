@@ -84,7 +84,6 @@ def uploader():
     isMap = nodesetID.isdigit()
 
     return redirect(url_for('render_results', jsonfilename=jsonfile.filename, svgfilename=svgfile.filename, schemesfilename=schemesfilename))
-    
 
 @application.route('/results')
 def render_results():
@@ -198,10 +197,16 @@ def render_results():
     svg_dict = svg_df.to_dict(orient = 'records')
     hypotheses_svg = list(svg_hypoth_merged['nodeid'])
 
-
-    os.remove(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(schemesfname)))
-    os.remove(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(svgfname)))
-    os.remove(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(jsonfname)))
+    if not isAIFdb:
+       
+        if os.path.exists(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(svgfname))):
+            os.remove(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(svgfname)))
+            print(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(svgfname)) + ' removed!')
+        if os.path.exists(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(jsonfname))):
+            os.remove(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(jsonfname)))
+            print(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(jsonfname)) + ' removed!')
+        if schemesExist:
+            os.remove(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(schemesfname)))
     
     return render_template('results.html', nodesetID=nodesetID, svg=Markup(svg), inodesNo=inodesNo, ra_nodes=ra_nodes, ca_nodes=ca_nodes, ma_nodes=ma_nodes, schemes=schemes_dict, scheme_definitions=scheme_definitions, hypotheses=hypotheses, hypotheses_ids=hypotheses_ids, hypotheses_svg=hypotheses_svg, consistent_evidence=consistent_evidence, inconsistent_evidence=inconsistent_evidence, conflicted_hypotheses=conflicted_hypotheses, alternative_hypotheses=alternative_hypotheses, child_nodes=child_nodes, child_edges=child_edges, svg_nodes=svg_nodes, aif_nodes=aif_nodes, div_nodes=div_nodes, s_nodes=s_nodes, l_node_id=l_node_id, l_node_text=l_node_text, l_i_nodes=l_i_nodes, i_node_list=i_node_list, i_node_txt_list=i_node_txt_list, i_node_svg_list=i_node_svg_list, svg_dict=svg_dict, all_schemes=all_schemes_svg, schemes_show = schemes_binary, all_edges=all_edges)
     
