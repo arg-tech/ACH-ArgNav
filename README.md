@@ -3,7 +3,7 @@
 
 # Using the tool
 
-In the main page, the user can either select to load a map/ corpus from the live AIFdb, or upload local files (in the format of the data in the examples folder). The first input asks for the json/aif file and the second for the svg (these should have the same name), while the third should be a json with the related schemes.  
+In the main page, the user can either select to load a map/ corpus from the live AIFdb, or upload local files (in the format of the data in the examples folder). The first input asks for the json/aif file and the second for the svg (these should have the same name and are both mandatory), while the third should be a json with the related schemes.  
 
 In the resuls page there are two main tabs. The Argument Map tab presents a graphical representation of the imported data, while the ACH tab includes the ACH matrix that data generate.
 
