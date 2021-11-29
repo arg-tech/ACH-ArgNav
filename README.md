@@ -2,8 +2,11 @@
  Argument navigation tool for Intelligence Analysis
 
 # Using the tool
-The Argument Map tab presents a graphical representation of the imported data, while the ACH tab includes the ACH matrix that data generate.
-            
+
+In the main page, the user can either select to load a map/ corpus from the live AIFdb, or upload local files (in the format of the data in the examples folder). The first input asks for the json/aif file and the second for the svg (these should have the same name), while the third should be a json with the related schemes.  
+
+In the resuls page there are two main tabs. The Argument Map tab presents a graphical representation of the imported data, while the ACH tab includes the ACH matrix that data generate.
+
  On top of the left side bar there are some analytics about the data, like the number of I-nodes, of RAs, CAs and MAs. It also includes a list with the available argument schemes in data. When clicking on a particular scheme, its argument instances are highlighted in the map, by changing the color of the respective shapes. The definition of that scheme in terms of its critical questions appear at the bottom of the left side bar. That information is also filled by clicking on a specific RA node in the SVG.
   
 The "Highlight in map" button indicates the hypotheses in the argument map tab by changing the color of the respective shapes. The "Clear" button reverts any changes made in SVG. 
