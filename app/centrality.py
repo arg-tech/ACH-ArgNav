@@ -366,7 +366,7 @@ class Centrality:
     @staticmethod
     def get_hypotheses(graph):
         hypotheses = []
-        ya_hypoth =  [x for x,y in graph.nodes(data=True) if y['text']=='Hypothesising']
+        ya_hypoth =  [x for x,y in graph.nodes(data=True) if y['type']=='YA' and y['text']=='Hypothesising']
         
         for v in ya_hypoth:
             v_successors = list(graph.successors(v))
@@ -403,27 +403,112 @@ class Centrality:
                         premises.append(ra_pr)
         return premises
     
+    @staticmethod
+    def get_i_s_premises(id, graph):
+        i_preds = []
+        s_preds = []
+        
+        #  print("Hyp:" + str(id))
+        pred1 = list(graph.predecessors(id))
+        for p in pred1 :
+        
+            node_type = graph.nodes[p]['type']
+                      
+            if node_type == 'RA' or node_type == 'CA' or node_type == 'MA':
+                s_preds.append(p)
+                pred2 = list(graph.predecessors(p))
+                for i_pr in pred2:
+                    if graph.nodes[i_pr]['type'] == 'I':
+                        i_preds.append(i_pr)
+        return i_preds, s_preds
+       
+       
+    def get_h_tree_old1(self, graph, h, h_tree_i_nodes, h_tree_s_nodes, h_tree_edges):
+        i_preds, s_preds = self.get_i_s_premises(h, graph)
+        if len(s_preds) == 0:
+            return h_tree_i_nodes, h_tree_s_nodes, h_tree_edges
+            
+        h_tree_i_nodes.extend(i_preds)
+        h_tree_s_nodes.extend(s_preds)
+        h_tree_edges.extend(graph.in_edges(h))
+        for i_pr in i_preds:
+            h_tree_i_nodes, h_tree_s_nodes, h_tree_edges = self.get_h_tree(graph, i_pr, h_tree_i_nodes, h_tree_s_nodes, h_tree_edges)
+        
+        return h_tree_i_nodes, h_tree_s_nodes, h_tree_edges
+        
     
+    def get_h_tree_old2(self, graph, h, h_tree_nodes, h_tree_edges):
+        premises = self.get_premises(h, graph)
+        if len(premises) == 0:
+            return h_tree_nodes, h_tree_edges
+            
+        h_tree_nodes.extend(premises)
+        h_tree_edges.extend(graph.in_edges(h))
+        
+        h_tree_edges.extend(graph.out_edges(h))
+        for pr in premises:
+            h_tree_nodes, h_tree_edges = self.get_h_tree(graph, pr, h_tree_nodes, h_tree_edges)
+        
+        return h_tree_nodes, h_tree_edges
+    
+        
+    def get_h_tree(self, graph, h):
+        h_tree_nodes = []
+        h_tree_edges = []
+        visited = []
+        
+        h_tree_nodes.append(h)
+        i=0
+        while len(visited) != len(h_tree_nodes):
+           
+            id = h_tree_nodes[i]
+            visited.append(id)
+            
+            preds = list(graph.predecessors(id))
+            for p in preds:
+                if graph.nodes[p]['type'] == 'I' or  graph.nodes[p]['type'] == 'RA':
+                    if p not in h_tree_nodes:
+                        h_tree_nodes.append(p)
+                        h_tree_edges.append((p, id))
+                       # e = graph.get_edge_data(p, id, default=0)
+                        #h_tree_edges.append(e)
+            
+            i += 1
+        
+        return h_tree_nodes, h_tree_edges
+    
+    def get_hypotheses_trees(self, graph, hypotheses):
+        h_tnodes_dict = dict()
+        h_tedges_dict = dict()
+        for h in hypotheses:
+            h_tree_nodes = []
+            h_tree_edges = []
+        
+            (id, text) = h
+            h_tree_nodes, h_tree_edges = self.get_h_tree(graph, id)
+            h_tnodes_dict[id] = h_tree_nodes
+            h_tedges_dict[id] = h_tree_edges
+        
+    
+        
+        return h_tnodes_dict, h_tedges_dict
+        
+        
     @staticmethod
     def find_consistent_evidence(self, graph, hypotheses):
-      #  print('========Consistent Evidence ========')
         consistent_dic = dict()
         
         for h in hypotheses :
             (id, text) = h
             prem_h = self.get_premises(id, graph)
-         #   print('----')
-         #   print(prem_h)
             consistent_dic[id] = prem_h
         
-     #   print(consistent_dic)
         return consistent_dic
            
         
     @staticmethod
     def get_incom_conflicts(id, graph, hypotheses_ids):
         incom_conflicts = []
-     #  print("Hyp:" + str(id))
         pred = list(graph.predecessors(id))
         for p in pred :
             node_type = graph.nodes[p]['type']
@@ -438,7 +523,6 @@ class Centrality:
            
     @staticmethod
     def find_inconsistent_evidence(self, graph, hypotheses):
-      #  print('========Inonsistent Evidence ========')
         inconsistent_dic = dict()
         hypotheses_ids = []
         for h in hypotheses :
@@ -449,14 +533,12 @@ class Centrality:
             confl_evidence = self.get_incom_conflicts(id, graph, hypotheses_ids)
             inconsistent_dic[id] = confl_evidence
         
-     #   print(inconsistent_dic)
         return inconsistent_dic
         
         
     @staticmethod
     def get_incom_confl_hyp(id, graph, hypotheses_ids):
         incom_conflicts = []
-     #  print("Hyp:" + str(id))
         pred = list(graph.predecessors(id))
         for p in pred :
             node_type = graph.nodes[p]['type']
@@ -471,7 +553,6 @@ class Centrality:
     
     @staticmethod
     def find_conflicted_hypotheses(self, graph, hypotheses):
-     #   print('========Conflicted Hypotheses ========')
         confl_hyp_dic = dict()
         hypotheses_ids = []
         for h in hypotheses :
@@ -480,17 +561,13 @@ class Centrality:
         
         for id in hypotheses_ids:
             confl_hyp = self.get_incom_confl_hyp(id, graph, hypotheses_ids)
-         #   print('----')
-         #   print(prem_h)
             confl_hyp_dic[id] = confl_hyp
         
-        #print(confl_hyp_dic)
         return confl_hyp_dic
  
     @staticmethod
     def get_supported_hyp(prem_id, hyp_id, graph, hypotheses_ids):
         supported_hyp = []
-     #  print("Hyp:" + str(id))
         h_succ = list(graph.successors(prem_id))
         for s in h_succ :
             if graph.nodes[s]['type'] == 'RA' :
@@ -502,8 +579,6 @@ class Centrality:
         
     @staticmethod
     def find_alternative_hypotheses(self, graph, hypotheses) :
-  #      print('======== Alternative Hypotheses ========')
-        
         altern_hyp_dic = dict()
         hypotheses_ids = []
         for h in hypotheses :
@@ -520,7 +595,6 @@ class Centrality:
                     supported_hyp.append(p)
             altern_hyp_dic[id] = supported_hyp
         
-#        print(altern_hyp_dic)
         return altern_hyp_dic
         
     @staticmethod

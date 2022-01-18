@@ -19,6 +19,16 @@ svg {
   position: absolute;
   display: inline-block;
 }
+
+.popover{
+    max-width: 100%; /* Max Width of the popover (depending on the container!) */
+}
+
+p.ow {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
 /*tr td:hover { background-color: darkgray };*/
 
 /*tr th:hover { background-color: darkgray };*/

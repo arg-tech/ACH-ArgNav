@@ -11,8 +11,10 @@ import urllib
 import tempfile
 import os
 import uuid
+#import sys
 
 application.config["UPLOAD_FOLDER"] = "uploaded_data/"
+#sys.setrecursionlimit(3000)
 
 @application.route('/')
 @application.route('/index')
@@ -100,9 +102,9 @@ def render_results():
         nodesetID = jsonfname.replace('.json', '')
         isMap = nodesetID.isdigit()
   
-        ordered_nodes, all_nodes, div_nodes, child_nodes, child_edges, s_nodes, ra_nodes, ca_nodes, ma_nodes, l_nodes, l_i_nodes, schemes, schemes_with_conc_prem, all_edges, ordered_hypoth, consistent_evidence, inconsistent_evidence, conflicted_hypotheses, alternative_hypotheses, scheme_definitions = get_info(nodesetID, isMap, isAIFdb, jsonfname, svgfname, schemesfname)
+        ordered_nodes, all_nodes, div_nodes, child_nodes, child_edges, s_nodes, ra_nodes, ca_nodes, ma_nodes, l_nodes, l_i_nodes, schemes, schemes_with_conc_prem, all_edges, ordered_hypoth, consistent_evidence, inconsistent_evidence, conflicted_hypotheses, alternative_hypotheses, scheme_definitions, h_tnodes_dict, h_tedges_dict = get_info(nodesetID, isMap, isAIFdb, jsonfname, svgfname, schemesfname)
     else:
-          ordered_nodes, all_nodes, div_nodes, child_nodes, child_edges, s_nodes, ra_nodes, ca_nodes, ma_nodes, l_nodes, l_i_nodes, schemes, schemes_with_conc_prem, all_edges, ordered_hypoth, consistent_evidence, inconsistent_evidence, conflicted_hypotheses, alternative_hypotheses, scheme_definitions = get_info(nodesetID, isMap, isAIFdb, None, None, None)
+          ordered_nodes, all_nodes, div_nodes, child_nodes, child_edges, s_nodes, ra_nodes, ca_nodes, ma_nodes, l_nodes, l_i_nodes, schemes, schemes_with_conc_prem, all_edges, ordered_hypoth, consistent_evidence, inconsistent_evidence, conflicted_hypotheses, alternative_hypotheses, scheme_definitions, h_tnodes_dict, h_tedges_dict = get_info(nodesetID, isMap, isAIFdb, None, None, None)
      
     inodesNo = len(ordered_nodes)
     
@@ -137,10 +139,12 @@ def render_results():
     svgp = SVGParse()
     svg = svgp.parse_svg_file(svg_file)
     svg_df = svgp.get_node_ids(svg_file)
-    
     #convert IDs to strings for merging
     svg_df['aifid'] = svg_df['aifid'].astype(str)
-  
+    
+    svg_edge_df = svgp.get_edge_ids(svg_file)
+    svg_edge_dict = svg_edge_df.to_dict(orient = 'records')
+    
     #merge the AIFid dataframe with the SVG dataframe
     merged_df = df.merge(svg_df, left_on=['id'], right_on=['aifid'], how='left')
     #get SVGids for all the nodes in a graph
@@ -195,6 +199,8 @@ def render_results():
   #  hypoth_id_col = df_hypotheses.loc['id', :]
     svg_hypoth_merged = df_hypotheses.merge(svg_df, left_on=['id'], right_on=['aifid'], how='left')
     svg_dict = svg_df.to_dict(orient = 'records')
+   # print('=====SVG DF======')
+   # print(svg_df)
     hypotheses_svg = list(svg_hypoth_merged['nodeid'])
 
     if not isAIFdb:
@@ -208,7 +214,7 @@ def render_results():
         if schemesExist:
             os.remove(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(schemesfname)))
     
-    return render_template('results.html', nodesetID=nodesetID, svg=Markup(svg), inodesNo=inodesNo, ra_nodes=ra_nodes, ca_nodes=ca_nodes, ma_nodes=ma_nodes, schemes=schemes_dict, scheme_definitions=scheme_definitions, hypotheses=hypotheses, hypotheses_ids=hypotheses_ids, hypotheses_svg=hypotheses_svg, consistent_evidence=consistent_evidence, inconsistent_evidence=inconsistent_evidence, conflicted_hypotheses=conflicted_hypotheses, alternative_hypotheses=alternative_hypotheses, child_nodes=child_nodes, child_edges=child_edges, svg_nodes=svg_nodes, aif_nodes=aif_nodes, div_nodes=div_nodes, s_nodes=s_nodes, l_node_id=l_node_id, l_node_text=l_node_text, l_i_nodes=l_i_nodes, i_node_list=i_node_list, i_node_txt_list=i_node_txt_list, i_node_svg_list=i_node_svg_list, svg_dict=svg_dict, all_schemes=all_schemes_svg, schemes_show = schemes_binary, all_edges=all_edges)
+    return render_template('results.html', nodesetID=nodesetID, svg=Markup(svg), inodesNo=inodesNo, ra_nodes=ra_nodes, ca_nodes=ca_nodes, ma_nodes=ma_nodes, schemes=schemes_dict, scheme_definitions=scheme_definitions, hypotheses=hypotheses, hypotheses_ids=hypotheses_ids, hypotheses_svg=hypotheses_svg, consistent_evidence=consistent_evidence, inconsistent_evidence=inconsistent_evidence, conflicted_hypotheses=conflicted_hypotheses, alternative_hypotheses=alternative_hypotheses, child_nodes=child_nodes, child_edges=child_edges, svg_nodes=svg_nodes, aif_nodes=aif_nodes, div_nodes=div_nodes, s_nodes=s_nodes, l_node_id=l_node_id, l_node_text=l_node_text, l_i_nodes=l_i_nodes, i_node_list=i_node_list, i_node_txt_list=i_node_txt_list, i_node_svg_list=i_node_svg_list, svg_dict=svg_dict, all_schemes=all_schemes_svg, schemes_show = schemes_binary, all_edges=all_edges, h_tnodes_dict = h_tnodes_dict, h_tedges_dict = h_tedges_dict, svg_edge_dict=svg_edge_dict)
     
     
 def get_svg_file(node_id, isMap, isAIFdb, svgfname):
@@ -283,4 +289,6 @@ def get_info(node_id, isMap, isAIFdb, jsonfname, svgfname, schemesfname):
     conflicted_hypotheses = centra.find_conflicted_hypotheses(centra, graph, hypotheses)
     alternative_hypotheses = centra.find_alternative_hypotheses(centra, graph, hypotheses)
     
-    return ordered_nodes, list_of_nodes, divergent_nodes, children, edges, s_nodes, ra_nodes, ca_nodes, ma_nodes, l_nodes, l_node_i_node, ra_scheme_i_nodes, all_scheme_nodes, all_edges, ordered_hypoth, consistent_evidence, inconsistent_evidence, conflicted_hypotheses, alternative_hypotheses,  scheme_definitions
+    h_tnodes_dict, h_tedges_dict = centra.get_hypotheses_trees(graph, hypotheses)
+    
+    return ordered_nodes, list_of_nodes, divergent_nodes, children, edges, s_nodes, ra_nodes, ca_nodes, ma_nodes, l_nodes, l_node_i_node, ra_scheme_i_nodes, all_scheme_nodes, all_edges, ordered_hypoth, consistent_evidence, inconsistent_evidence, conflicted_hypotheses, alternative_hypotheses,  scheme_definitions, h_tnodes_dict, h_tedges_dict

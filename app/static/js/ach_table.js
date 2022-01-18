@@ -89,6 +89,195 @@ function fill_ach_table(){
 
 fill_ach_table();
 
+
+function minXminY(nodeid){
+    
+    var h_node_tree = h_tnodes_dict[nodeid];
+    var minmaxPoints = [];
+    
+    
+    var minX;
+    var minY;
+    var maxX; 
+    var maxY;
+    
+    for(var i=0; i<h_node_tree.length; i++){
+        var aifid = h_node_tree[i];
+        var svgid = getSVG_ID(aifid);
+        
+        var points = d3.select("#" + svgid).select('polygon').attr('points').split(' ');
+        var lefttop_x = parseFloat(points[1].split(',')[0]); 
+        var lefttop_y = parseFloat(points[1].split(',')[1]);
+        var right_bottom_x = parseFloat(points[3].split(',')[0]); 
+        var right_bottom_y = parseFloat(points[3].split(',')[1]); 
+        
+        if(i==0){
+            minX = lefttop_x;
+            minY = lefttop_y;
+            maxX = right_bottom_x;
+            maxY = right_bottom_y;
+        }
+        
+        if(lefttop_x < minX) {
+            minX = lefttop_x;
+        }
+        
+        if(lefttop_y < minY){
+            minY = lefttop_y;
+        }
+        
+        if(right_bottom_x > maxX){
+            maxX = right_bottom_x;
+        }
+        
+        if(right_bottom_y > maxY){
+            maxY = right_bottom_y;
+        }
+      
+    }
+    
+    minmaxPoints[0] = minX;
+    minmaxPoints[1] = minY;
+    minmaxPoints[2] = maxX;
+    minmaxPoints[3] = maxY;
+    
+    return minmaxPoints;
+}
+
+function get_svg_edge_id(from, to){
+    var edge = from + "," + to;
+    
+    for(var i=0; i<svg_edge_dict.length; i++){
+        if (edge == svg_edge_dict[i]['edge']){
+            return svg_edge_dict[i]['nodeid'];
+        }
+    }
+}
+
+function generate_svg_chain($el, nodeid){
+    
+  
+    var minmaxPoints = minXminY(nodeid);
+    var minX = minmaxPoints[0];
+    var minY = minmaxPoints[1];
+    var maxX = minmaxPoints[2];
+    var maxY = minmaxPoints[3];
+    
+    var svgWidth = maxX - minX + 20;
+    var svgHeight = maxY - minY + 20;
+    
+    
+    var svg_new = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+    svg_new.setAttribute('viewBox', "0.00 0.00 " + svgWidth + " " + svgHeight );
+    svg_new.setAttribute('xmlns', "http://www.w3.org/2000/svg");
+    svg_new.setAttribute('xmlns:xlink', "http://www.w3.org/1999/xlink");
+    
+
+    var svgNS = svg_new.namespaceURI;
+    
+    var graphg = document.createElementNS(svgNS, 'g');
+    graphg.setAttribute('class', 'graph');
+    var transform = "scale(1 1) translate(-" + minX +  " " + minY.toString().replace("-", "") + ")";
+    graphg.setAttribute('transform', transform);
+    h_node_tree = h_tnodes_dict[nodeid];
+    h_edge_tree = h_tedges_dict[nodeid];
+    
+    
+    for(var i=0; i<h_node_tree.length; i++){
+        var aifid = h_node_tree[i];
+        var svgid = getSVG_ID(aifid);
+        
+        var gnode = d3.select("#" + svgid);
+        var gpolygon = gnode.select('polygon');
+        
+        var newg = document.createElementNS(svgNS, 'g');
+        newg.setAttribute('id', gnode.attr('id'));
+        newg.setAttribute('class', gnode.attr('class'));
+        
+        var newtitle = document.createElementNS(svgNS, 'title');
+        var txtnode = document.createTextNode(gnode.select('title').text());
+        
+        
+        newtitle.appendChild(txtnode);
+        newg.appendChild(newtitle);
+        
+        
+        var newpolygon = document.createElementNS(svgNS, 'polygon');
+        newpolygon.setAttribute('fill', gpolygon.attr('fill'));
+        newpolygon.setAttribute('stroke', gpolygon.attr('stroke'));
+        newpolygon.setAttribute('points', gpolygon.attr('points'));
+        
+        newg.appendChild(newpolygon);
+        
+        var gtext = gnode.selectAll('text')
+            .each(function(d) {
+                var newTextNode = document.createElementNS(svgNS, 'text');
+                newTextNode.setAttribute('text-anchor', d3.select(this).attr('text-anchor'));
+                newTextNode.setAttribute('x', d3.select(this).attr('x'));
+                newTextNode.setAttribute('y', d3.select(this).attr('y'));
+                newTextNode.setAttribute('font-family', d3.select(this).attr('font-family'));
+                newTextNode.setAttribute('font-size', d3.select(this).attr('font-size'));
+                newTextNode.setAttribute('fill', d3.select(this).attr('fill'));
+                
+                var contentNode = document.createTextNode(d3.select(this).text());
+                newTextNode.appendChild(contentNode);
+                newg.appendChild(newTextNode);
+     
+            });;
+        
+    
+       
+        graphg.appendChild(newg);
+        
+    }
+    
+    for(var i=0; i<h_edge_tree.length; i++) {
+        var edge = h_edge_tree[i];
+        var from = edge[0];
+        var to = edge[1];
+        
+        var svg_id = get_svg_edge_id(from, to);
+        
+        var gedge = d3.select("#" + svg_id);
+        var p = gedge.select('path');
+        var pol = gedge.select('polygon');
+        
+        var newg = document.createElementNS(svgNS, 'g');
+        newg.setAttribute('id', gedge.attr('id'));
+        newg.setAttribute('class', gedge.attr('class'));
+        
+        var newtitle = document.createElementNS(svgNS, 'title');
+        var txtnode = document.createTextNode(gedge.select('title').text());
+        
+        
+        newtitle.appendChild(txtnode);
+        newg.appendChild(newtitle);
+        
+        
+        var path = document.createElementNS(svgNS, 'path');
+        path.setAttribute('fill', p.attr('fill'));
+        path.setAttribute('stroke', p.attr('stroke'));
+        path.setAttribute('d', p.attr('d'));
+        newg.appendChild(path);
+        
+        var polygon = document.createElementNS(svgNS, 'polygon');
+        polygon.setAttribute('fill', pol.attr('fill'));
+        polygon.setAttribute('stroke', pol.attr('stroke'));
+        polygon.setAttribute('points', pol.attr('points'));
+        newg.appendChild(polygon);
+        
+        graphg.appendChild(newg);
+    }
+    
+    
+    svg_new.appendChild(graphg);
+    
+    $el.append('<div style="width:' + svgWidth + 'px; height:' + svgHeight + '"> </div>');
+  //  $el.append('<div style="width:3661px"> </div>');
+    $el.append(svg_new);
+    return $el;
+}
+
 $(function() {
         var old_bkgrnd;
         // initialize popover with dynamic content
@@ -96,24 +285,52 @@ $(function() {
             placement: 'bottom',
             container: 'body',
             html: true,
-            trigger: 'hover',
+           // trigger: 'hover',
+            trigger: 'manual',
             content: function () {
                     var nodeid = $(this).text().trim().replace("(H)", "");
-                    var nodetxt = inode_txt_list[inode_list.indexOf(nodeid)];
-                    return '<p> <span style="font-size: 9px;">' + nodetxt + '</span></p>';
+                
+                    if(hypotheses_ids.includes(nodeid)){
+                    
+                        var nodetxt = inode_txt_list[inode_list.indexOf(nodeid)];
+                        var htmlCode = '<div id="chainDivId" class="popover-content"> '+
+                       // ' <p class="ow"> <span style="font-size: 10px;"> <span class="fw-bold"> TEXT: </span>' + nodetxt + '</span></p> '+
+                        ' <span style="font-size: 10px;"> <span class="fw-bold"> TEXT: </span>' + nodetxt + '</span> <br>'+
+                         '<span style="font-size: 9px;"> <span class="fw-bold"> REASONING CHAIN </span> </span>' 
+                            '</div>';
+                        var $el = $(htmlCode);
+                        $el = generate_svg_chain($el, nodeid);
+                       
+                        return $el;
+                    } else {
+                        var nodetxt = inode_txt_list[inode_list.indexOf(nodeid)];
+                        var htmlCode = '<div id="chainDivId"> '+
+                        ' <p class="ow"> <span style="font-size: 10px;"> <span class="fw-bold"> TEXT: </span>' + nodetxt + '</span></p> </div>';
+                        var $el = $(htmlCode);
+                        return $el;
+                    }
                 }
             
+        }).on("mouseenter", function () {
+            var _this = this;
+            $(this).popover("show");
+            old_bkgrnd = $(this).css("background-color");
+            $(this).css("background-color", "darkgray");      
+            $(this).siblings(".popover").on("mouseleave", function () {
+                $(_this).popover('hide');
+            });
+        }).on("mouseleave", function () {
+            var _this = this;
+            
+            $(_this).css("background-color", old_bkgrnd);
+            setTimeout(function () {
+                if (!$(".popover:hover").length) {
+                    $(_this).popover("hide")
+                }
+            }, 100);
         });
 
-        // prevent popover from being hidden on mouseout.
-        // only dismiss when explicity clicked (e.g. has .hide-popover)
-        $('tr th').on('hide.bs.popover', function(evt) {
-            if(!$(evt.target).hasClass('hide-popover')) {
-                evt.preventDefault();
-                evt.stopPropagation();
-                evt.cancelBubble = true;
-            }
-        });
+    
 
         // reset helper class when dismissed
         $('tr th').on('hidden.bs.popover', function(evt) {
@@ -129,50 +346,35 @@ $(function() {
             $('#btnPopover').popover('hide');
         });
 
-      $('tr th').data('overButton', false);
-      $('tr th').data('overPopover', false);
       $.fn.closePopover = function(){
         var $this = $(this);
-
+          console.log('IS it ever called???');
+          console.log('DATA overPopover' + $this.data('overPopover'));
+          console.log('Data over button' + $this.data('overButton'));
         if(!$this.data('overPopover') && !$this.data('overButton')){
+            console.log("NOT OVER POPOVER and NOT OVER BUTTON");
           $this.addClass('hide-popover');
           $this.popover('hide');              
         }
       }
 
-      //set flags when mouse enters the button or the popover.
-      //When the mouse leaves unset immediately, wait a second (to allow the mouse to enter again or enter the other) and then test to see if the mouse is no longer over either. If not, close popover.
-      $('tr th').on('mouseenter', function(evt){
-        $(this).data('overButton', true);
-
-        old_bkgrnd = $(this).css("background-color");
-          $(this).css("background-color", "darkgray");            
-      });
-      $('tr th').on('mouseleave', function(evt){
-        var $btn = $(this);
-        $btn.data('overButton', false);
-        $(this).css("background-color", old_bkgrnd);
-        setTimeout(function() {$btn.closePopover();}, 100);
-
-      });
-
       $('tr th').on('shown.bs.popover', function () {
+          console.log("ON SHOWN BS POPOVER");
         var $btn = $(this);
 
         $('.popover-content').on('mouseenter', function (evt){
+            console.log("POPOVER CONTENT");
           $btn.data('overPopover', true);
+       
+           
         });
         $('.popover-content').on('mouseleave', function (evt){
+             console.log("POPOVER CONTENT LEAVE");
           $btn.data('overPopover', false);
           setTimeout(function() {$btn.closePopover();}, 100);
         });
       });
     
-    /*    $('tr th').click(function () {  
-                $(this).addClass('hide-popover');
-                $(this).popover('hide');              
-                //$('#navMenu').toggle();
-            });  */
     });
 
 
@@ -182,61 +384,19 @@ $(function(){
     $.contextMenu({
         selector: '.context-menu-one', 
         trigger: 'left',
+        fontFamily: "Courier New",
         callback: function(key, options) {
-            var aifid =  $(this).text().trim().replace("(H)", "");
-          //  $('.tab-pane[id="#argMapTab"]').tab('show');
-          // $("#achTab").removeClass("active");  // this deactivates the home tab
-           // $("#argMapTab").addClass("active"); 
-           // $("#argMapTab").addClass("active"); 
-            $('.nav-tabs .nav-item a[href="#argMapTab"]').tab('show');
-            var node_zoom = i_node_svg_list[inode_list.indexOf(aifid)];
-            zoomToPathWithID(node_zoom);
+            if(key == "map") {
+                var aifid =  $(this).text().trim().replace("(H)", "");
+                $('.nav-tabs .nav-item a[href="#argMapTab"]').tab('show');
+                var node_zoom = i_node_svg_list[inode_list.indexOf(aifid)];
+                zoomToPathWithID(node_zoom);
+            } 
         },
         items: {
-            "map": { name: "Show in map" }
+            "map": { name: ' <span class="fw-light small text-wrap"> Show in map </span>' , isHtmlName: true}
             
         }
     });
 });
 
-/*$("#showACHtxt").click(function() {
- // this deactivates the home tab
-    //$( "#tabs" ).tabs({ active: "achTab" });
-    $("#achTab").addClass("active"); 
-    $("#argMapTab").hide(); 
-    $("#argMapTab").removeClass("active"); 
-    
-});*/
-
-
-/*var old_bkgrnd;
-$( "tr th" ).hover(function() {
-    old_bkgrnd = $(this).css("background-color");
-    $(this).css("background-color", "darkgray");
-    var nodeid = $(this).text().trim().replace("(H)", "");
-    var nodetxt = inode_txt_list[inode_list.indexOf(nodeid)];
-   // console.log(inode_txt_list[inode_list.indexOf(nodeid)]);
-    $(this).popover({
-		html: true, 
-		container: 'body',
-		content: function() {
-	            return ' <div id= "ach_info" data-trigger="hover"> ' +
-				        '<p id="iNodeACH" class="fw-light small" >' + nodetxt +
-                        '<button type="button" class="btn btn-secondary btn-sm"> Show in graph </button> </p> </div>'
-	        }
-	});
-    
-}, function(){
-    $(this).css("background-color", old_bkgrnd);
-});*/
-
-/*$("tr th").popover({
-		html: true, 
-		content: function() {
-            //  old_bkgrnd = $(this).css("background-color");
-              $(this).css("background-color", "darkgray");
-              var nodeid = $(this).text().trim().replace("(H)", "");
-              console.log(inode_txt_list[inode_list.indexOf(nodeid)]);
-	          return $('#ach_info').html();
-	        }
-	});*/

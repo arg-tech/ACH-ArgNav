@@ -1,6 +1,7 @@
 from . import application
 import xml.etree.ElementTree as ET
 import pandas as pd
+import html.parser
 
 class SVGParse:
     """
@@ -55,5 +56,25 @@ class SVGParse:
         
         df = pd.DataFrame(node_list, columns =['aifid', 'nodeid'])
         
+        #df = convert_list_df(node_list, 'aifid', 'nodeid')
+        return df
+
+    @staticmethod
+    def get_edge_ids(svg_file):
+        xmldoc = ET.ElementTree(ET.fromstring(svg_file))
+        root = xmldoc.getroot()
+        n_root = root[0]
+        edges = n_root.findall("./{http://www.w3.org/2000/svg}g[@class='edge']")
+        edge_list = []
+        html_parser = html.parser.HTMLParser()
+        for edge in edges:
+
+           for child in edge:
+               if child.tag == "{http://www.w3.org/2000/svg}title":
+                    text = html_parser.unescape(child.text)
+                    edge_list.append((text.replace('->', ','),edge.attrib['id']))
+
+        df = pd.DataFrame(edge_list, columns =['edge', 'nodeid'])
+
         #df = convert_list_df(node_list, 'aifid', 'nodeid')
         return df

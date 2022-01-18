@@ -30,9 +30,17 @@ $(document).on('click', '.dropdown-menu li a.selected_hypoth', function() {
   //  console.log(position);
     var node_zoom = hypotheses_svg[position];
     zoomToPathWithID(node_zoom);
+    fill_hypotheses_info(hypotheses_ids[position]);
  //   console.log(hypotheses_ids);
 });
 
+
+$(document).on('click', 'a.selected3', function() {
+    var aifid = $(this).text().trim();
+    var node_zoom = i_node_svg_list[inode_list.indexOf(aifid)];
+    
+    zoomToPathWithID(node_zoom);
+});
 
 
 

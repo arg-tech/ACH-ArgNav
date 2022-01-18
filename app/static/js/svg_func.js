@@ -237,10 +237,9 @@ function get_scheme_name(aif_id){
     return scheme_name;
 }
 
-function getSVG_ID(ra_id) {
-    console.log(ra_id);
+function getSVG_ID(aif_id) {
     for (var j = 0; j < svg_dict.length; j++) {
-        if(svg_dict[j]['aifid'] == ra_id)
+        if(svg_dict[j]['aifid'] == aif_id)
             return(svg_dict[j]['nodeid']);
     }
     return null;

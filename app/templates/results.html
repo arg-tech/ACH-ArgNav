@@ -141,11 +141,11 @@
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
+    </div>     
 </div>
-     
-     
-     
-    </div>
+    
+    
+    
 <div id="wrapper" class="row">
  
 <div id="sidebar" class="d-flex flex-column align-items-center flex-shrink-1 p-3 bg-light" style="width:350px" "overflow-x:visible; overflow-y:auto;">
@@ -226,7 +226,7 @@
     
     <!-- HYPOTHESES INFORMATION -->
     <div class="d-none" id="hypothesesInfo" style="width:100%">
-       <span class="fw-light small"> &nbsp;&nbsp; HYPOTHESIS: </span> <span class="small" id="hypothesisID"> <strong></strong> </span>   &nbsp;&nbsp;   <br>
+        <span class="fw-light small"> &nbsp;&nbsp; HYPOTHESIS: </span> <a class="selected3" href="#"> <span class="small" id="hypothesisID">  <strong>   </strong> </span> </a>  &nbsp;&nbsp;   <br>
         <span class="fw-light small"> &nbsp;&nbsp; TEXT: </span> <em> <span id="hypothesisTxt" class="fw-light small"> "Shane Jeffries is likely considering involvement..." </span> </em> <br>
     
         <br>
@@ -305,7 +305,7 @@
               {{ svg }}
           </div>
           
-          <div class="tab-pane scrollarea container mt-5" role="tabpanel" id="achTab" style= "width:100%; overflow-x:auto; overflow-y:auto;">
+          <div class="tab-pane scrollarea container mt-5" role="tabpanel" id="achTab" style= "overflow-x:auto; overflow-y:auto;">
               <table class="table table-bordered table-striped table-earning" id="ACHtable" style="cursor:pointer;">
               <thead>
                 <tr id="ach_head">
@@ -316,6 +316,22 @@
 
               </tbody>
             </table>
+             <div class="modal" id="modalReasoningChain">   
+                <div class="modal-dialog modal-dialog-scrollable" id="modalHelp">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="staticBackdropLabel">Reasoning Chain</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body small" id="chainBodyId">
+
+                        </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                          </div>
+                    </div>
+                </div>     
+            </div>
           </div>
       </div>
       
@@ -335,7 +351,7 @@
 <script> 
     // declare global variables
     
-    var dynamicTable = ''
+    var dynamicTable = '';
     var node_list = {{ child_nodes | tojson}};
     var edge_list = {{child_edges | tojson}};
     var aif_nodes_list = {{aif_nodes | tojson}};
@@ -355,9 +371,11 @@
     var schemes_show = {{schemes_show | tojson}};
     
     var scheme_definitions = {{ scheme_definitions | tojson }}
-    console.log(scheme_definitions);
     var svg_dict = {{ svg_dict | tojson}}
-   
+    var svg_edge_dict = {{ svg_edge_dict | tojson }}
+    console.log("=====SVG Edge Dict ========");
+    console.log(svg_edge_dict)
+    
     var ra_nodes = {{ ra_nodes | tojson }}
     var ca_nodes = {{ ca_nodes | tojson }}
     var ma_nodes = {{ ma_nodes | tojson }}
@@ -373,6 +391,11 @@
     var conflicted_hypotheses = {{ conflicted_hypotheses | tojson }};
     var alternative_hypotheses = {{ alternative_hypotheses | tojson }};
 
+    var h_tnodes_dict = {{ h_tnodes_dict | tojson }};
+    var h_tedges_dict = {{ h_tedges_dict | tojson }};
+    console.log("======SVG EDGES dict======");
+    console.log(h_tedges_dict);
+    
     var from_annotation_list = [];
     var to_annotation_list = [];
     var from_text = [];
