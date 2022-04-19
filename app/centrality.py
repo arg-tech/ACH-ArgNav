@@ -244,8 +244,7 @@ class Centrality:
                 return True
             else :
                 return False
-    
-    
+                
     @staticmethod
     def get_schemes_definition_file(self, graph, filepath):
         schemes_list = []
@@ -456,6 +455,7 @@ class Centrality:
         h_tree_nodes = []
         h_tree_edges = []
         visited = []
+        consistent_evidence = []
         
         h_tree_nodes.append(h)
         i=0
@@ -470,28 +470,33 @@ class Centrality:
                     if p not in h_tree_nodes:
                         h_tree_nodes.append(p)
                         h_tree_edges.append((p, id))
-                       # e = graph.get_edge_data(p, id, default=0)
-                        #h_tree_edges.append(e)
-            
+                     
+                    #Create Consistent evidence based on the leaves of the tree
+                    if graph.nodes[p]['type'] == 'I':
+                        pr = list(graph.predecessors(p))
+                        if len(pr) == 0 and p not in consistent_evidence:
+                            consistent_evidence.append(p)
             i += 1
         
-        return h_tree_nodes, h_tree_edges
+        return h_tree_nodes, h_tree_edges, consistent_evidence
     
     def get_hypotheses_trees(self, graph, hypotheses):
         h_tnodes_dict = dict()
         h_tedges_dict = dict()
+        h_consistent_evidence = dict()
+        
         for h in hypotheses:
             h_tree_nodes = []
             h_tree_edges = []
         
             (id, text) = h
-            h_tree_nodes, h_tree_edges = self.get_h_tree(graph, id)
+            h_tree_nodes, h_tree_edges, consistent_evidence = self.get_h_tree(graph, id)
             h_tnodes_dict[id] = h_tree_nodes
             h_tedges_dict[id] = h_tree_edges
-        
+            h_consistent_evidence[id] = consistent_evidence
     
         
-        return h_tnodes_dict, h_tedges_dict
+        return h_tnodes_dict, h_tedges_dict, h_consistent_evidence
         
         
     @staticmethod

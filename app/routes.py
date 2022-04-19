@@ -275,20 +275,19 @@ def get_info(node_id, isMap, isAIFdb, jsonfname, svgfname, schemesfname):
         scheme_definitions=centra.get_schemes_definition_live(centra, graph)
     else:
         if schemesExist:
-            print('schemesExist')
             scheme_definitions=centra.get_schemes_definition_file(centra, graph, os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(schemesfname)))
-            print('---- SCHEME DEFINITIONS-------')
-            print(scheme_definitions)
     
     #  schemes = centra.get_scheme_names(n_graph)
     ra_scheme_i_nodes = centra.get_ra_i_schemes_nodes(graph, schemes)
     all_scheme_nodes = centra.get_all_schemes_nodes(graph, schemes)
     
-    consistent_evidence = centra.find_consistent_evidence(centra, graph, hypotheses)
-    inconsistent_evidence = centra.find_inconsistent_evidence(centra, graph, hypotheses)
-    conflicted_hypotheses = centra.find_conflicted_hypotheses(centra, graph, hypotheses)
-    alternative_hypotheses = centra.find_alternative_hypotheses(centra, graph, hypotheses)
     
-    h_tnodes_dict, h_tedges_dict = centra.get_hypotheses_trees(graph, hypotheses)
+    h_tnodes_dict, h_tedges_dict, h_consistent_evidence = centra.get_hypotheses_trees(graph, hypotheses)
     
-    return ordered_nodes, list_of_nodes, divergent_nodes, children, edges, s_nodes, ra_nodes, ca_nodes, ma_nodes, l_nodes, l_node_i_node, ra_scheme_i_nodes, all_scheme_nodes, all_edges, ordered_hypoth, consistent_evidence, inconsistent_evidence, conflicted_hypotheses, alternative_hypotheses,  scheme_definitions, h_tnodes_dict, h_tedges_dict
+    
+   # consistent_evidence = centra.find_consistent_evidence(centra, graph, hypotheses)
+    h_inconsistent_evidence = centra.find_inconsistent_evidence(centra, graph, hypotheses)
+    h_conflicted_hypotheses = centra.find_conflicted_hypotheses(centra, graph, hypotheses)
+    h_alternative_hypotheses = centra.find_alternative_hypotheses(centra, graph, hypotheses)
+    
+    return ordered_nodes, list_of_nodes, divergent_nodes, children, edges, s_nodes, ra_nodes, ca_nodes, ma_nodes, l_nodes, l_node_i_node, ra_scheme_i_nodes, all_scheme_nodes, all_edges, ordered_hypoth, h_consistent_evidence, h_inconsistent_evidence, h_conflicted_hypotheses, h_alternative_hypotheses,  scheme_definitions, h_tnodes_dict, h_tedges_dict
