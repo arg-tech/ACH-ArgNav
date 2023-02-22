@@ -31,11 +31,14 @@ def my_form_post():
     global isAIFdb
     global isMap
     global nodesetID
-    session['nodesetID'] = request.form['nodesetName']
-    nodesetID = session.get('nodesetID', None)
+    #session['nodesetID'] = request.form['nodesetName']
+    #nodesetID = session.get('nodesetID', None)
+    #isMap = nodesetID.isdigit()
+    #isAIFdb = True
+    nodesetID = request.form['nodesetName']
     isMap = nodesetID.isdigit()
     isAIFdb = True
-    return redirect('/results')
+    return redirect(url_for('render_results', nodesetID=nodesetID, isMap=isMap, isAIFdb=isAIFdb))
 
 def save_file(f):
     filename = secure_filename(f.filename)
@@ -89,9 +92,11 @@ def uploader():
 
 @application.route('/results')
 def render_results():
-    global isAIFdb
-    global isMap
-    global nodesetID
+    print ("TEST: fired")
+    isAIFdb = request.args.get('isAIFdb')
+    isMap = request.args.get('isMap')
+    nodesetID = request.args.get('nodesetID')
+    print (get_info(nodesetID, isMap, isAIFdb, None, None, None))
     global schemesExist
     
     if not isAIFdb:
@@ -248,10 +253,13 @@ def get_info(node_id, isMap, isAIFdb, jsonfname, svgfname, schemesfname):
     #Add extension for L-nodes here
     if isAIFdb:
         node_path = centra.create_json_url(node_id, isMap)
+        print ('TEST: node_path', node_path, node_id, isMap)
         graph = centra.get_graph_url(node_path)
     else:
         graph = centra.get_graph_json_file(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(jsonfname)))
-        
+    
+    print('TEST: graph', graph)
+
     hypotheses = centra.get_hypotheses(graph)
     graph = centra.remove_iso_nodes(graph)
     l_nodes = centra.get_l_node_list(graph)
