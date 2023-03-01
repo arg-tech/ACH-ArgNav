@@ -69,6 +69,8 @@ class Centrality:
             False if corpus shortname
         """
 
+        print ('TEST: isMap', nodeset_id, isMap)
+
         if isMap:
             return 'http://www.aifdb.org/json/' + nodeset_id
         else:
@@ -87,7 +89,7 @@ class Centrality:
         """
         corpus_loader = CorpusLoader()
         try:
-            with application.open_resource(node_path) as json_data:
+            with app.open_resource(node_path) as json_data:
                 graph = corpus_loader.parse_json(json.load(json_data))
         except(IOError):
             print('File was not found:')
