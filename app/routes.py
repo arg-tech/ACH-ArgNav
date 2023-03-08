@@ -1,5 +1,6 @@
 from flask import render_template, request, redirect, session, Markup, url_for
 from . import application
+from distutils.util import strtobool
 import pandas as pd
 from urllib.request import urlopen
 from app.centrality import Centrality
@@ -28,14 +29,9 @@ def my_form():
     
 @application.route('/form', methods=['POST'])
 def my_form_post():
-    global isAIFdb
-    global isMap
     global nodesetID
-    session['nodesetID'] = request.form['nodesetName']
-    nodesetID = session.get('nodesetID', None)
-    isMap = nodesetID.isdigit()
-    isAIFdb = True
-    return redirect('/results')
+    nodesetID = request.form['nodesetName']
+    return redirect(url_for('render_results', nodesetID=nodesetID))
 
 def save_file(f):
     filename = secure_filename(f.filename)
@@ -89,22 +85,36 @@ def uploader():
 
 @application.route('/results')
 def render_results():
-    global isAIFdb
-    global isMap
-    global nodesetID
+    nodesetID = request.args.get('nodesetID')
+
+    # Safeguards for null or empty parameter
+    if nodesetID is None or nodesetID is '':
+        return redirect('/form')
+
+    isMap = nodesetID.isdigit()
+    isAIFdb = True
+
     global schemesExist
     
     if not isAIFdb:
-        jsonfname=request.args['jsonfilename']
+        jsonfname = request.args['jsonfilename']
         svgfname = request.args['svgfilename']
         schemesfname = request.args['schemesfilename']
         
         nodesetID = jsonfname.replace('.json', '')
         isMap = nodesetID.isdigit()
-  
-        ordered_nodes, all_nodes, div_nodes, child_nodes, child_edges, s_nodes, ra_nodes, ca_nodes, ma_nodes, l_nodes, l_i_nodes, schemes, schemes_with_conc_prem, all_edges, ordered_hypoth, consistent_evidence, inconsistent_evidence, conflicted_hypotheses, alternative_hypotheses, scheme_definitions, h_tnodes_dict, h_tedges_dict = get_info(nodesetID, isMap, isAIFdb, jsonfname, svgfname, schemesfname)
+        
+        # Catch exception if result not found
+        try:
+            ordered_nodes, all_nodes, div_nodes, child_nodes, child_edges, s_nodes, ra_nodes, ca_nodes, ma_nodes, l_nodes, l_i_nodes, schemes, schemes_with_conc_prem, all_edges, ordered_hypoth, consistent_evidence, inconsistent_evidence, conflicted_hypotheses, alternative_hypotheses, scheme_definitions, h_tnodes_dict, h_tedges_dict = get_info(nodesetID, isMap, isAIFdb, jsonfname, svgfname, schemesfname)
+        except:
+            return redirect('/form')
     else:
-          ordered_nodes, all_nodes, div_nodes, child_nodes, child_edges, s_nodes, ra_nodes, ca_nodes, ma_nodes, l_nodes, l_i_nodes, schemes, schemes_with_conc_prem, all_edges, ordered_hypoth, consistent_evidence, inconsistent_evidence, conflicted_hypotheses, alternative_hypotheses, scheme_definitions, h_tnodes_dict, h_tedges_dict = get_info(nodesetID, isMap, isAIFdb, None, None, None)
+        # Catch exception if result not found
+        try:
+            ordered_nodes, all_nodes, div_nodes, child_nodes, child_edges, s_nodes, ra_nodes, ca_nodes, ma_nodes, l_nodes, l_i_nodes, schemes, schemes_with_conc_prem, all_edges, ordered_hypoth, consistent_evidence, inconsistent_evidence, conflicted_hypotheses, alternative_hypotheses, scheme_definitions, h_tnodes_dict, h_tedges_dict = get_info(nodesetID, isMap, isAIFdb, None, None, None)
+        except:
+            return redirect('/form')
      
     inodesNo = len(ordered_nodes)
     
@@ -137,7 +147,13 @@ def render_results():
         svg_file = get_svg_file(nodesetID, isMap, isAIFdb, svgfname)
   #create instance of SVGParse class and then parse the SVG file to get the SVG IDs and corresponding AIFdb node IDs.
     svgp = SVGParse()
+
+    # Protect against null or empty svg file
+    if svg_file is None or svg_file is '':
+        return redirect('/form')  
+
     svg = svgp.parse_svg_file(svg_file)
+    
     svg_df = svgp.get_node_ids(svg_file)
     #convert IDs to strings for merging
     svg_df['aifid'] = svg_df['aifid'].astype(str)
@@ -224,10 +240,11 @@ def get_svg_file(node_id, isMap, isAIFdb, svgfname):
         try:
             file = urlopen(node_path)
             svg = file.read()
+            return svg
         except(IOError):
             print('File was not found:')
             print(node_path)
-        return svg
+        return None
     else:
         try:
             with open(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(svgfname))) as f:
@@ -248,10 +265,13 @@ def get_info(node_id, isMap, isAIFdb, jsonfname, svgfname, schemesfname):
     #Add extension for L-nodes here
     if isAIFdb:
         node_path = centra.create_json_url(node_id, isMap)
+        print ('TEST: node_path', node_path, node_id, isMap)
         graph = centra.get_graph_url(node_path)
     else:
         graph = centra.get_graph_json_file(os.path.join(application.config['UPLOAD_FOLDER'], secure_filename(jsonfname)))
-        
+    
+    print('TEST: graph', graph)
+
     hypotheses = centra.get_hypotheses(graph)
     graph = centra.remove_iso_nodes(graph)
     l_nodes = centra.get_l_node_list(graph)
